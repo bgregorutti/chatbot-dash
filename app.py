@@ -1,15 +1,21 @@
 import time
 
-from dash import html, dcc, Input, Output, State, Dash
+from dash import html, dcc, Input, Output, State, Dash, clientside_callback
 import dash_bootstrap_components as dbc
 
 # import openai
 
-def Header(name):
-    return  html.H1(name, style={"margin-top": 5})
+def header(name, color_mode_switch):
+    return dbc.Row(
+        [
+            dbc.Col(html.H1(name, style={"margin-top": 5}), width="auto", className="d-flex align-items-center"),
+            dbc.Col(color_mode_switch, width="auto", className="ms-auto d-flex align-items-center justify-content-end"),
+        ],
+        align="center",
+        className="mb-2"
+    )
 
-
-def textbox(text, box):
+def textbox(text, box, light_mode):
     style = {
         "max-width": "60%",
         "width": "max-content",
@@ -33,8 +39,8 @@ def textbox(text, box):
             },
         )
 
-        textbox = dbc.Card(text, style=style, body=True, color="primary", inverse=True)
-        return html.Div([thumbnail, textbox])
+        textbox_content = dbc.Card(text, style=style, body=True, color="primary", inverse=True)
+        return html.Div([thumbnail, textbox_content])
 
     elif box == "bot":
         style["margin-left"] = 0
@@ -49,8 +55,8 @@ def textbox(text, box):
                 "float": "left"
             },
         )
-        textbox = dbc.Card(text, style=style, body=True, color="light", inverse=False)
-        return html.Div([thumbnail, textbox])
+        textbox_content = dbc.Card(text, style=style, body=True, color="light" if light_mode else "dark", inverse=False)
+        return html.Div([thumbnail, textbox_content])
 
     else:
         raise ValueError("Incorrect option for `box`.")
@@ -59,7 +65,7 @@ def textbox(text, box):
 # openai.api_key = os.getenv("OPENAI_KEY")
 
 # Define app
-app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.themes.MINTY, dbc.icons.FONT_AWESOME])
 server = app.server
 
 
@@ -91,10 +97,21 @@ controls = dbc.InputGroup(
     ]
 )
 
+
+
+color_mode_switch =  html.Span(
+    [
+        dbc.Label(className="fa fa-moon", html_for="color-mode-switch"),
+        dbc.Switch( id="color-mode-switch", value=False, className="d-inline-block ms-1", persistence=True),
+        dbc.Label(className="fa fa-sun", html_for="color-mode-switch"),
+    ]
+)
+
+
 app.layout = dbc.Container(
     fluid=False,
     children=[
-        Header("Chatbot template with Dash"),
+        header("Chatbot template with Dash", color_mode_switch),
         html.Hr(),
         dcc.Store(id="store-conversation", data=[]),
         conversation,
@@ -104,10 +121,10 @@ app.layout = dbc.Container(
 
 
 @app.callback(
-    Output("display-conversation", "children"), [Input("store-conversation", "data")]
+    Output("display-conversation", "children"), [Input("store-conversation", "data"), Input("color-mode-switch", "value")]
 )
-def update_display(chat_history):
-    return [textbox(item.get("content"), box=item.get("type")) for item in chat_history]
+def update_display(chat_history, light_mode):
+    return [textbox(item.get("content"), box=item.get("type"), light_mode=light_mode) for item in chat_history]
 
 
 @app.callback(
@@ -163,6 +180,20 @@ def chat_core(chat_history):
     chat_history.append({"type": "bot", "content": model_output})
 
     return chat_history, None
+
+
+
+clientside_callback(
+    """
+    (switchOn) => {
+       document.documentElement.setAttribute('data-bs-theme', switchOn ? 'light' : 'dark');  
+       return window.dash_clientside.no_update
+    }
+    """,
+    Output("color-mode-switch", "id"),
+    Input("color-mode-switch", "value"),
+)
+
 
 if __name__ == "__main__":
     app.run_server(debug=True)
