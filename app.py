@@ -91,11 +91,30 @@ conversation = html.Div(
     }
 )
 
-controls = dbc.InputGroup(
-    children=[
-        dbc.Input(id="user-input", placeholder="Ask me a question...", type="text"),
-        dbc.Button("Submit", id="submit")
-    ]
+controls = html.Div(
+    [
+        dbc.Input(id="user-input", placeholder="Ask me a question...", type="text", style={"padding-right": "2.5rem"}),
+        html.I(
+            className="fa fa-paper-plane",
+            id="submit",
+            style={
+                "position": "absolute",
+                "right": "10px",
+                "top": "50%",
+                "transform": "translateY(-50%)",
+                "cursor": "pointer",
+                "color": "#B5B5B5",
+                "font-size": "1.2rem"
+            }
+        ),
+    ],
+    style={
+        "position": "relative",
+        "width": "80%",
+        "margin": "0 auto",
+        "display": "flex",
+        "justify-content": "center"
+    }
 )
 
 
