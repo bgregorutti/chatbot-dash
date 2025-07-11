@@ -78,7 +78,8 @@ conversation = html.Div(
     html.Div(
         [
             html.Div(id="display-conversation"),
-            dbc.Spinner(html.Div(id="loading-component")),
+            # dbc.Spinner(html.Div(id="loading-component")),
+            dbc.Container(dbc.Container(dbc.Container(html.Div(className="dot-pulse", id="loading-component", hidden=True)))),
             html.Br()
         ]
     ),
@@ -102,7 +103,7 @@ controls = dbc.InputGroup(
 color_mode_switch =  html.Span(
     [
         dbc.Label(className="fa fa-moon", html_for="color-mode-switch"),
-        dbc.Switch( id="color-mode-switch", value=False, className="d-inline-block ms-1", persistence=True),
+        dbc.Switch(id="color-mode-switch", value=False, className="d-inline-block ms-1", persistence=True),
         dbc.Label(className="fa fa-sun", html_for="color-mode-switch"),
     ]
 )
@@ -136,7 +137,11 @@ def clear_input(n_clicks, n_submit):
 
 
 @app.callback(
-    [Output("store-conversation", "data", allow_duplicate=True), Output("loading-component", "children", allow_duplicate=True)],
+    [
+        Output("store-conversation", "data", allow_duplicate=True), 
+        Output("loading-component", "children", allow_duplicate=True),
+        Output("loading-component", "hidden", allow_duplicate=True)
+    ],
     [Input("submit", "n_clicks"), Input("user-input", "n_submit")],
     [State("user-input", "value"), State("store-conversation", "data")],
     prevent_initial_call=True
@@ -151,10 +156,14 @@ def run_chatbot(n_clicks, n_submit, user_input, chat_history):
     # First add the user input to the chat history
     chat_history.append({"type": "user", "content": user_input})
 
-    return chat_history, None
+    return chat_history, None, False
 
 @app.callback(
-    [Output("store-conversation", "data", allow_duplicate=True), Output("loading-component", "children", allow_duplicate=True)],
+    [
+        Output("store-conversation", "data", allow_duplicate=True), 
+        Output("loading-component", "children", allow_duplicate=True),
+        Output("loading-component", "hidden", allow_duplicate=True)
+    ],
     [Input("store-conversation", "data")],
     prevent_initial_call=True
 )
@@ -174,12 +183,12 @@ def chat_core(chat_history):
     # )
     # model_output = response.choices[0].text.strip()
 
-    time.sleep(1)
+    time.sleep(3)
     content = chat_history[-1].get("content")
     model_output = f"I heard: {content}"
     chat_history.append({"type": "bot", "content": model_output})
 
-    return chat_history, None
+    return chat_history, None, True
 
 
 
